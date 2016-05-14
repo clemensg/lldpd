@@ -29,14 +29,17 @@
 #endif
 
 #if defined(__i386__)
-# define REG_SYSCALL	REG_EAX
+# define M_SYSCALL	gregs[REG_EAX]
 # define ARCH_NR	AUDIT_ARCH_I386
 #elif defined(__x86_64__)
-# define REG_SYSCALL	REG_RAX
+# define M_SYSCALL	gregs[REG_RAX]
 # define ARCH_NR	AUDIT_ARCH_X86_64
+#elif defined(__arm__)
+# define M_SYSCALL	arm_r7
+# define ARCH_NR	AUDIT_ARCH_ARM
 #else
 # error "Platform does not support seccomp filter yet"
-# define REG_SYSCALL	0
+# define M_SYSCALL	0
 # define ARCH_NR	0
 #endif
 
@@ -68,7 +71,7 @@ priv_seccomp_trap_handler(int signal, siginfo_t *info, void *vctx)
 		return;
 	if (!ctx)
 		_exit(161);
-	syscall = ctx->uc_mcontext.gregs[REG_SYSCALL];
+	syscall = ctx->uc_mcontext.M_SYSCALL;
 	trapped = 1;
 
 	/* Log them. Technically, `log_warnx()` is not signal safe, but we are
